@@ -10,15 +10,15 @@
 
 #### Prototype system 
 
-![proto](.\_asset\prototype.png)
+![proto](_asset\prototype.png)
 
 
 
 #### System connection
 
-![connection](.\_asset\connect.png)
+![connection](_asset\connect.png)
 
-![6pin-cable](.\_asset\camera_6pin_cable.png)
+![6pin-cable](_asset\camera_6pin_cable.png)
 
 #### Component list
 
@@ -32,7 +32,7 @@
 
 > Note: (1) The settings can be found in the Guru mode (changed from [Beginner] to [Guru] from above the config window). (2) Whether to enable the auto white balance and gamma transformation depends on the specific application. 
 
-![camera_setting](.\_asset\camera_setting.png)
+![camera_setting](_asset\camera_setting.png)
 
 
 
