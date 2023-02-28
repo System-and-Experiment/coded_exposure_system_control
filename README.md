@@ -32,6 +32,8 @@
 
 > Note: (1) The settings can be found in the Guru mode (changed from [Beginner] to [Guru] from above the config window). (2) Whether to enable the auto white balance and gamma transformation depends on the specific application. 
 
+- software：[JAI Control Tool](https://www.jai.com/support-software/jai-software)
+
 ![camera_setting](./_asset/camera_setting.png)
 
 
