@@ -10,20 +10,31 @@
 
 #### Prototype system 
 
-![proto](./_asset/prototype.png)
+<img src="./_asset/prototype.png" alt="proto" style="zoom:50%;" />
 
 
 
 #### System connection
 
-![connection](./_asset/connect.png)
+<img src="./_asset/connect.png" alt="connection" style="zoom:70%;" />
 
-![6pin-cable](./_asset/camera_6pin_cable.png)
+
+
+**Note that different camera may have different Line#-Pin# mapping for the 6pin cable**
+
+| | |
+|---|---|
+| JAI camera           | <img src="./_asset/camera_6pin_cable_JAI.png" alt="6pin-cable" style="zoom: 67%;" /> |
+| FLIR Blackfly camera | <img src="./_asset/6pin-trigger-cable_FLIR.png" alt="6pin-cable" style="zoom:25%;" /> |
+
+
+
+
 
 #### Component list
 
 - [Thorlabs-Liquid crystal optical shutter - LCC1620A](https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=8166)
-- JAI-GO-5100C-USB camera
+- camera : JAI-GO-5100C-USB / FLIR Blackfly S BFS-U3-50S5C
 - [YwRobot Arduino nano controller board](https://i-item.jd.com/10035386897105.html#crumb-wrap)
 
 
@@ -32,13 +43,13 @@
 
 > Note: (1) The settings can be found in the Guru mode (changed from [Beginner] to [Guru] from above the config window). (2) Whether to enable the auto white balance and gamma transformation depends on the specific application. 
 
-- software：[JAI Control Tool](https://www.jai.com/support-software/jai-software)
+- JAI software：[JAI Control Tool](https://www.jai.com/support-software/jai-software)
 
 ![camera_setting](./_asset/camera_setting.png)
 
 
 
-
+- FLIR software: [Spinnaker-SpinViewer](https://www.flir.com/support-center/iis/machine-vision/downloads/spinnaker-sdk-download/spinnaker-sdk--download-files/) (The configuration is similar to the JAI camera shown above)
 
 ## Arduino Software and Code
 
@@ -55,72 +66,59 @@
 
 ```C
 /*
-Arduino board code for synchronization between the camera and the external shutter
-function:
-	exposure encoding sequence 0: board-A0 high level, shutter open
-	exposure encoding sequence 1: board-A0 low level, shutter close
-	exposure encoding duration: board-A1 high level
-	after exposure encoding: board-A1 low level
-	the led will blink according to the encoding sequence for reference
-note: 
-	after sending the whole encoding sequence, the code will make the shutter `keep the last status (0/1)` for an interval.
-	Don't know why, perhaps for system test purpose, e.g., to serve as the start flag to check if the output sequence is true.
-*/
+ * Info: Arduino code for synchronizing the camera with the external shutter
+ * Last Modified: 2023-05-29 22:07:53
+ * Modified By: Zhihong Zhang <z_zhi_hong@163.com>
+ */
 
-
-// Set a pin number
+// Arduino pin definition
 const int ledPin  =  LED_BUILTIN; // the number of the LED pin
 const int shutter =  A0; // the number of the shutter pin
 const int camera =  A1; // the number of the camera pin
 
-// ledState used to set the LED
-int ledState = LOW;             
+// coded exposure config: debug test
+// const long seq[] = {1,0,1,0}; 
+// const long seqlen = 4; 
+// const long exposure_time = 1000;           // exposure time of camera to capture one image 
+// const long exposure_delay = 1;            // delay time to make sure the hardware are prepared for next capture
 
-// Store the last time LED was updated
-// Generally, you should use "unsigned long" for variables that hold time(milliseconds), 
-// because the value will quickly become too large for an int to store.
-unsigned long previousMillis = 0;        
+// coded exposure config: cebd
+const long seq[] = {1, 1, 1, 0, 0, 1, 0, 1}; 
+const long seqlen = 8;
+const long exposure_time = 200;           // exposure time of the camera to capture one image (200ms/exposure, 25ms/encoding-bit)
+const long exposure_delay = 1;            // delay time (1ms) to make sure the hardware are prepared for next capture
 
+// variable init
+int ledState = LOW;             // ledState used to set the LED
+unsigned long previousMillis = 0;        // will store last time LED was updated
 
-// Exposure encoding sequence setting
-const long interval = 800;  # duration of a single exposure, i.e., the entire encoding sequence duration         
-const long seq[] = {0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0}; # encoding sequence
-const long seqlen = 32; // length of the encoding sequence
-
-
-// set the digital pin as output:
+// pin init
 void setup() {
+  // set the digital pin as output:
   pinMode(ledPin, OUTPUT);
   pinMode(shutter, OUTPUT);
   pinMode(camera, OUTPUT);
 }
 
+// run
 void loop() {
   unsigned long currentMillis = millis();
 
-  if (currentMillis - previousMillis >= interval) {
-    // enter the encoding process
+  if (currentMillis - previousMillis >= exposure_time) {
+    digitalWrite(camera, 1);
     
     // save the last time you blinked the LED
     previousMillis = currentMillis;
-	
-	// set camera signal to high level
-	digitalWrite(camera, 1);
 
-    // exposure encoding
-	for (int i=0;i<seqlen;i++){
+    for (int i=0;i<seqlen;i++){
       ledState = seq[i];
       // set the LED with the ledState of the variable:
       digitalWrite(ledPin, ledState);
       digitalWrite(shutter, !ledState);
-      delay(interval / seqlen); // interval / seqlen = exposure time for one bit
+      delay(exposure_time / seqlen);
     }
-	
-	// set camera signal to low level
     digitalWrite(camera, 0);
-    
-	// zzh: why delay after each exposure? For test purpose? (serve as the start flag to check if the output sequence is true?)
-	delay(interval);
+    delay(exposure_delay);
   }
 }
 
