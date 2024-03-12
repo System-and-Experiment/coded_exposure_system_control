@@ -51,6 +51,6 @@ void loop() {
       delay(exposure_time / seqlen);
     }
     digitalWrite(camera, 0);
-    delay(exposure_delay);
+    delay(1); // delay 1ms after one exposure to reset camera for the next exposure
   }
 }
